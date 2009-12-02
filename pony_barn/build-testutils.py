@@ -8,7 +8,7 @@ class PonyBuild(BaseBuild):
         super(PonyBuild, self).__init__()
         self.repo_url = "git://github.com/ericholscher/django-test-utils"
         self.name = "django-test-utils"
-        self.required = ['django', 'twill']
+        self.required = ['django', 'twill', 'BeautifulSoup']
 
     def define_commands(self):
 
