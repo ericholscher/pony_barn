@@ -14,7 +14,7 @@ class DjangoBuild(BaseBuild):
     def define_commands(self):
             self.commands = [
                 pony.GitClone(self.repo_url),
-                pony.TestCommand([self.context.python, '../tests/runtests.py', '--settings', 'django_pony_test_settings'], name='run tests', run_cwd='django')
+                pony.TestCommand([self.context.python, 'tests/runtests.py', '--settings', 'django_pony_test_settings'], name='run tests')
              ]
 
     def setup(self):
