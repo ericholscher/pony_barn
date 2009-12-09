@@ -17,6 +17,16 @@ class DjangoBuild(BaseBuild):
                 pony.TestCommand([self.context.python, 'tests/runtests.py', '--settings', 'django_pony_test_settings'], name='run tests')
              ]
 
+    def get_tags(self):
+        # Figure out the python version and tags
+        py_version = ".".join(str(p) for p in sys.version_info[:2])
+        self.py_name = 'python%s' % py_version
+
+        ret, out, err = pony._run_command(['svn', 'info', 'http://code.djangoproject.com/svn/django/trunk'])
+        info = dict(l.split(': ', 1) for l in out.strip().split('\n'))
+        revno = info['Last Changed Rev']
+        self.tags = [self.py_name, 'svn%s' % revno, 'trunk']
+
     def setup(self):
         # Create the settings file
         dest_dir = os.path.join(self.context.tempdir, 'lib', self.py_name, 'site-packages')

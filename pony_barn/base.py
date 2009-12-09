@@ -19,14 +19,16 @@ class BaseBuild(object):
     def setup(self):
         pass
 
-    def execute(self, argv):
-        self.options, self.args = pony.parse_cmdline(argv)
-
+    def get_tags(self):
         # Figure out the python version and tags
         py_version = ".".join(str(p) for p in sys.version_info[:2])
         self.py_name = 'python%s' % py_version
         self.tags = [self.py_name, 'base_builder']
 
+    def execute(self, argv):
+        self.options, self.args = pony.parse_cmdline(argv)
+
+        self.get_tags()
         ###
         self.server_url = 'http://devmason.com/pony_server/xmlrpc'
         if not self.options.force_build:
