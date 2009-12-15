@@ -3,10 +3,10 @@ from base_django import DjangoBuild
 from pony_build import client as pony
 
 
-class KongBuild(DjangoBuild):
+class PonyBuild(DjangoBuild):
 
     def __init__(self):
-        super(KongBuild, self).__init__()
+        super(PonyBuild, self).__init__()
         self.repo_url = "git://github.com/alex/django-filter.git"
         self.name = "django-filter"
         self.package_name = 'django_filters'
@@ -22,5 +22,5 @@ class KongBuild(DjangoBuild):
 
 
 if __name__ == '__main__':
-    build = KongBuild()
+    build = PonyBuild()
     sys.exit(build.execute(sys.argv))

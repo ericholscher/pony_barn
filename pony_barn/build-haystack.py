@@ -9,7 +9,7 @@ from pony_build import client as pony
 # DRL_FIXME: Add Whoosh dependency.
 
 
-class HaystackBuild(BaseBuild):
+class PonyBuild(BaseBuild):
     def __init__(self):
         super(DjangoBuild, self).__init__()
         self.directory = os.path.dirname(os.path.abspath(__file__))
@@ -35,5 +35,5 @@ class HaystackBuild(BaseBuild):
 
 
 if __name__ == '__main__':
-    build = HaystackBuild()
+    build = PonyBuild()
     sys.exit(build.execute(sys.argv))
