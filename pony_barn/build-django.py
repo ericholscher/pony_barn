@@ -3,6 +3,19 @@ import sys
 from base import BaseBuild
 from pony_build import client as pony
 
+SETTINGS = """
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3'
+    },
+    'other': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'TEST_NAME': 'other_db'
+    }
+}
+"""
+
+
 class DjangoBuild(BaseBuild):
 
     def __init__(self):
@@ -32,7 +45,7 @@ class DjangoBuild(BaseBuild):
         dest_dir = os.path.join(self.context.tempdir, 'lib', self.py_name, 'site-packages')
         settings_dest = os.path.join(dest_dir, 'django_pony_test_settings.py')
         init_dest = os.path.join(dest_dir, '__init__.py')
-        open(settings_dest, 'w').write("DATABASE_ENGINE='sqlite3'")
+        open(settings_dest, 'w').write(SETTINGS)
         open(init_dest, 'w').write('#OMG')
         sys.path.insert(0, dest_dir)
 
