@@ -1,18 +1,11 @@
 import sys
-from pony_build.client import BuildCommand, TestCommand, do, send, \
-     TempDirectoryContext, SetupCommand, GitClone, check, parse_cmdline
-import pony_build.client as pony
 import os
 import tempfile
 import shutil
 
+import pony_barn.client as pony
 
 class BaseBuild(object):
-    """
-    Required in the subclass:
-        name
-    """
-
     def __init__(self):
         self.required = []
 
