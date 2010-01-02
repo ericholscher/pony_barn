@@ -1,28 +1,17 @@
 import os
 import sys
-from base import BaseBuild
+from base_django import DjangoBuild
 from pony_build import client as pony
 
-SETTINGS = """
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3'
-    },
-    'other': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'TEST_NAME': 'other_db'
-    }
-}
-"""
-
-
-class DjangoBuild(BaseBuild):
+class PonyBuild(DjangoBuild):
 
     def __init__(self):
-        super(DjangoBuild, self).__init__()
+        super(PonyBuild, self).__init__()
+        self.settings_file = os.path.join(self.directory, 'settings', 'django_settings.py')
         self.directory = os.path.dirname(os.path.abspath(__file__))
         self.repo_url = 'git://github.com/django/django.git'
         self.name = "django"
+        self.required = []
 
     def define_commands(self):
             self.commands = [
@@ -40,15 +29,6 @@ class DjangoBuild(BaseBuild):
         revno = info['Last Changed Rev']
         self.tags = [self.py_name, 'svn%s' % revno, 'trunk']
 
-    def setup(self):
-        # Create the settings file
-        dest_dir = os.path.join(self.context.tempdir, 'lib', self.py_name, 'site-packages')
-        settings_dest = os.path.join(dest_dir, 'django_pony_test_settings.py')
-        init_dest = os.path.join(dest_dir, '__init__.py')
-        open(settings_dest, 'w').write(SETTINGS)
-        open(init_dest, 'w').write('#OMG')
-        sys.path.insert(0, dest_dir)
-
 if __name__ == '__main__':
-    build = DjangoBuild()
+    build = PonyBuild()
     sys.exit(build.execute(sys.argv))

@@ -114,7 +114,7 @@ class TempDirectoryContext(Context):
         info['tempdir'] = self.tempdir
 
 class VirtualenvContext(Context):
-    def __init__(self, always_cleanup=True, dependencies=[]):
+    def __init__(self, always_cleanup=True, use_site_packages=False, dependencies=[], **kwargs):
         Context.__init__(self)
         self.cleanup = always_cleanup
         self.dependencies = dependencies
@@ -126,8 +126,10 @@ class VirtualenvContext(Context):
         self.tempdir = tempfile.mkdtemp()
 
         print 'creating virtualenv'
-        #_run_command(['virtualenv', '--no-site-packages', self.tempdir])
-        _run_command(['virtualenv', self.tempdir])
+        if use_site_packages:
+            _run_command(['virtualenv', self.tempdir])
+        else:
+            _run_command(['virtualenv', '--no-site-packages', self.tempdir])
 
         # calculate where a few things live so we can easily shell out to 'em
         self.python = os.path.join(self.tempdir, 'bin', 'python')
