@@ -16,7 +16,7 @@ class PonyBuild(DjangoBuild):
 
         self.commands = [ pony.GitClone(self.repo_url),
                      pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
-                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', 'django_pony_test_settings'], name='Install'),
+                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', 'django_pony_test_settings'], name='Syncdb'),
                      pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', 'django_pony_test_settings'], name='run tests')
                      ]
 

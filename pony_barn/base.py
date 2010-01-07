@@ -35,7 +35,7 @@ class BaseBuild(object):
         self.setup()
         self.define_commands()
         results = pony.do(self.name, self.commands, context=self.context)
-        self.report(results)
+        return self.report(results)
 
 
     def add_options(self):
