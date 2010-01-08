@@ -17,13 +17,6 @@ import traceback
 from optparse import OptionParser
 import pprint
 
-pb_servers = {
-    'pb-dev' : 'http://lyorn.idyll.org/ctb/pb-dev/xmlrpc',
-    'local' : 'http://localhost:8000/xmlrpc'
-    }
-pb_servers['default'] = pb_servers['pb-dev']
-
-###
 import pip
 
 DEFAULT_CACHE_DIR='~/.pony-build'
@@ -31,10 +24,7 @@ def guess_cache_dir(dirname):
     parent = os.environ.get('PONY_BUILD_CACHE', DEFAULT_CACHE_DIR)
     parent = os.path.expanduser(parent)
     result = os.path.join(parent, dirname)
-
     return result
-
-###
 
 def _replace_variables(cmd, variables_d):
     if cmd.startswith('PB:'):
@@ -88,32 +78,6 @@ class Context(object):
     def update_client_info(self, info):
         info['duration'] = self.end_time - self.start_time
 
-class TempDirectoryContext(Context):
-    def __init__(self, cleanup=True):
-        Context.__init__(self)
-        self.cleanup = cleanup
-
-    def initialize(self):
-        Context.initialize(self)
-        self.tempdir = tempfile.mkdtemp()
-        self.cwd = os.getcwd()
-
-        print 'changing to temp directory:', self.tempdir
-        os.chdir(self.tempdir)
-
-    def finish(self):
-        os.chdir(self.cwd)
-        try:
-            Context.finish(self)
-        finally:
-            if self.cleanup:
-                print 'removing', self.tempdir
-                shutil.rmtree(self.tempdir, ignore_errors=True)
-
-    def update_client_info(self, info):
-        Context.update_client_info(self, info)
-        info['tempdir'] = self.tempdir
-
 class VirtualenvContext(Context):
     def __init__(self, always_cleanup=True, use_site_packages=False, dependencies=[], **kwargs):
         Context.__init__(self)
@@ -159,8 +123,6 @@ class VirtualenvContext(Context):
             if self.cleanup:
                 print 'removing', self.tempdir
                 shutil.rmtree(self.tempdir, ignore_errors=True)
-
-
 
     def update_client_info(self, info):
         #Context.update_client_info(self, info)
@@ -342,7 +304,6 @@ def send(server_url, x, hostname=None, tags=()):
     client_info['host'] = hostname
     client_info['tags'] = tags
 
-    server_url = get_server_url(server_url)
     print 'using server URL:', server_url
     _send(server_url, client_info, reslist)
 
@@ -354,58 +315,10 @@ def check(name, server_url, tags=(), hostname=None, arch=None, reserve_time=0):
         arch = get_arch()
 
     client_info = dict(package=name, host=hostname, arch=arch, tags=tags)
-    server_url = get_server_url(server_url)
     s = xmlrpclib.ServerProxy(server_url, allow_none=True)
     (flag, reason) = s.check_should_build(client_info, True, reserve_time)
     return flag
 
-def get_server_url(server_name):
-    try_url = urlparse.urlparse(server_name)
-    if try_url.scheme:
-        server_url = server_name
-    else:                               # not a URL?
-        server_url = pb_servers[server_name]
-
-    return server_url
-
-def get_tagsets_for_package(server, package):
-    server = get_server_url(server)
-    s = xmlrpclib.ServerProxy(server, allow_none=True)
-    return s.get_tagsets_for_package(package)
-
-###
-
-def parse_cmdline(argv=[]):
-    cmdline = OptionParser()
-    cmdline.add_option('-f', '--force-build', dest='force_build',
-                       action='store_true', default=False,
-                       help="run a build whether or not it's stale")
-
-    cmdline.add_option('-n', '--no-report', dest='report',
-                       action='store_false', default=True,
-                       help="do not report build results to server")
-
-    cmdline.add_option('-N', '--no-clean-temp', dest='cleanup_temp',
-                       action='store_false', default=True,
-                       help='do not clean up the temp directory')
-
-    cmdline.add_option('-s', '--server-url', dest='server_url',
-                       action='store', default='default',
-                       help='set pony-build server URL for reporting results')
-
-    cmdline.add_option('-v', '--verbose', dest='verbose',
-                       action='store_true', default=False,
-                       help='set verbose reporting')
-
-    if not argv:
-        (options, args) = cmdline.parse_args()
-    else:
-        (options, args) = cmdline.parse_args(argv)
-
-    return options, args
-
-
-###
 
 def get_python_config(options, args):
     if not len(args):
@@ -421,66 +334,3 @@ def get_python_config(options, args):
 
     return dict(python_exe=python_ver, tags=tags)
 
-# PYTHON: generic recipe elements
-PYTHON_EXE = 'PB:python_exe'
-
-PythonBuild = BuildCommand([PYTHON_EXE, 'setup.py', 'build'])
-PythonBuildInPlace = BuildCommand([PYTHON_EXE, 'setup.py', 'build_ext', '-i'])
-PythonTest = TestCommand([PYTHON_EXE, 'setup.py', 'test'])
-
-recipes = {
-    'pony-build' : (get_python_config,
-                    [ GitClone('git://github.com/ctb/pony-build.git'),
-                      PythonBuild,
-                      PythonTest
-             ]),
-    'twill' : (get_python_config,
-               [ SvnUpdate('twill', 'https://twill.googlecode.com/svn/branches/0.9.2-dev/twill', cache_dir='~/.pony-build/twill'),
-                 PythonBuild,
-                 PythonTest
-             ]),
-    }
-
-###
-
-if __name__ == '__main__':
-    options, args = parse_cmdline()
-
-    package = args[0]
-    (config_fn, recipe) = recipes[package]
-    variables = config_fn(options, args[1:])
-
-    tags = variables['tags']
-
-    for r in recipe:
-        r.set_variables(variables)
-
-    ###
-
-    server_url = options.server_url
-
-    if not options.force_build:
-        if not check(package, server_url, tags=tags):
-            print 'check build says no need to build; bye'
-            sys.exit(0)
-
-    context = TempDirectoryContext()
-    results = do(package, recipe, context=context, stop_if_failure=False)
-    client_info, reslist = results
-
-    if options.report:
-        print 'result: %s; sending' % (client_info['success'],)
-        send(server_url, results, tags=tags)
-    else:
-        print 'build result:'
-        pprint.pprint(client_info)
-        pprint.pprint(reslist)
-
-        print '(NOT SENDING BUILD RESULT TO SERVER)'
-
-    if not client_info['success']:
-        print 'build failed.'
-        sys.exit(-1)
-
-    print 'build succeeded.'
-    sys.exit(0)
