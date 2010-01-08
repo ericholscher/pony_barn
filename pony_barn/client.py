@@ -24,6 +24,7 @@ pb_servers = {
 pb_servers['default'] = pb_servers['pb-dev']
 
 ###
+import pip
 
 DEFAULT_CACHE_DIR='~/.pony-build'
 def guess_cache_dir(dirname):
@@ -223,14 +224,16 @@ class TestCommand(BaseCommand):
     command_type = 'test'
     command_name = 'test'
 
-class GitClone(SetupCommand):
+
+class VCSClone(SetupCommand):
     command_name = 'checkout'
 
     def __init__(self, repository, branch='master', cache_dir=None,
-                 use_cache=True, **kwargs):
-        SetupCommand.__init__(self, [], **kwargs)
+                 use_cache=True, egg=None, **kwargs):
+        BaseCommand.__init__(self, [], **kwargs)
         self.repository = repository
         self.branch = branch
+        self.egg = egg
 
         self.use_cache = use_cache
         self.cache_dir = cache_dir
@@ -241,188 +244,46 @@ class GitClone(SetupCommand):
         self.results_dict = {}
 
     def run(self, context):
-        # first, guess the co dir name
-        p = urlparse.urlparse(self.repository) # what about Windows path names?
-        path = p.path
-
-        dirname = path.rstrip('/').split('/')[-1]
-        if dirname.endswith('.git'):
-            dirname = dirname[:-4]
-
-        print 'git checkout dirname guessed as: %s' % (dirname,)
-
         if self.use_cache:
             cache_dir = self.cache_dir
             if not cache_dir:
-                cache_dir = guess_cache_dir(dirname)
-        else:
-            raise Exception("MUST USE CACHE")
+                cache_dir = guess_cache_dir(self.egg)
+        vcs = pip.vcs.get_backend(self.vcs)
+        vcs_repo = vcs("%s+%s#egg=%s" % (self.vcs, self.repository, self.egg))
+        try:
+            if os.path.exists(cache_dir):
+                vcs_repo.update(cache_dir, [])
+            else:
+                vcs_repo.obtain(cache_dir)
+            self.status = 0
+        except:
+            self.status = 1
 
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-
-        #change to working directory. It is nicer to use git this way than to fiddle with the
-        #GIT_DIR environment variable
-        os.chdir(cache_dir)
-
-        #first clone ever
-        if not os.path.exists(os.path.join(cache_dir, dirname, '.git', 'config')):
-            print "INITIAL CLONE"
-            cmdlist = ['git', 'clone', '--depth=1', self.repository]
-            (ret, out, err) = _run_command(cmdlist)
-
-            self.results_dict['clone'] = \
-                 dict(status=ret, output=out, errout=err,
-                      command=str(cmdlist))
-
-            if ret != 0:
-                return
-
-        #at this point we have a checkout
-        if not os.path.exists(dirname) and os.path.isdir(dirname):
-            print 'wrong guess; %s does not exist.  whoops' % (dirname,)
-            self.status = -1
-            return
-        #change to that dir
-        #os.chdir(dirname)
-
-        #update the cache
-        if self.use_cache and cache_dir:
-            branchspec = '%s:%s' % (self.branch, self.branch)
-            cmdlist = ['git', 'fetch', '-ufv', self.repository, branchspec]
-            (ret, out, err) = _run_command(cmdlist, dirname)
-
-            self.results_dict['cache_update'] = \
-                     dict(status=ret, output=out, errout=err,
-                          command=str(cmdlist))
-
-            if ret != 0:
-                return
-
-        # check out the right branch
-        if self.branch != 'master':
-            print "NON MASTER CHECKOUT"
-            cmdlist = ['git', 'checkout', 'origin/'+self.branch]
-            (ret, out, err) = _run_command(cmdlist, dirname)
-
-            print cmdlist, out
-
-            self.results_dict['checkout+origin'] = \
-                    dict(status=ret, output=out, errout=err,
-                         command=str(cmdlist), branch=self.branch)
-            if ret != 0:
-                return
-
-            cmdlist = ['git', 'checkout', '-b', self.branch]
-
-            print cmdlist, out
-
-            (ret, out, err) = _run_command(cmdlist, dirname)
-            self.results_dict['checkout+-b'] = \
-                    dict(status=ret, output=out, errout=err,
-                         command=str(cmdlist), branch=self.branch)
-            if ret != 0:
-                return
-
-        # get some info on what our HEAD is
-        cmdlist = ['git', 'log', '-1', '--pretty=oneline']
-        (ret, out, err) = _run_command(cmdlist, dirname)
-
-        assert ret == 0, (cmdlist, ret, out, err)
-
-        self.version_info = out.strip()
-        self.status = 0
-
-        # set the build directory, too.
-        context.build_dir = os.path.join(os.getcwd(),
-                                         dirname)
-
-        #Make sure we're at the HEAD in the filesystem.
-        cmdlist = ['git', 'reset', '--hard', 'HEAD']
-        (ret, out, err) = _run_command(cmdlist, dirname)
-
+        context.build_dir = os.path.join(cache_dir)
 
     def get_results(self):
         self.results_dict['out'] = self.results_dict['errout'] = ''
-        self.results_dict['command'] = 'GitClone(%s, %s)' % (self.repository,
+        self.results_dict['command'] = 'Clone(%s, %s)' % (self.repository,
                                                              self.branch)
         self.results_dict['status'] = self.status
         self.results_dict['type'] = self.command_type
         self.results_dict['name'] = self.command_name
 
-        self.results_dict['version_type'] = 'git'
+        self.results_dict['version_type'] = self.vcs
         if self.version_info:
             self.results_dict['version_info'] = self.version_info
 
         return self.results_dict
 
-class SvnUpdate(SetupCommand):
-    command_name = 'checkout'
+class GitClone(VCSClone):
+    vcs = "git"
 
-    def __init__(self, dirname, repository, cache_dir=None, **kwargs):
-        SetupCommand.__init__(self, [], **kwargs)
-        self.repository = repository
+class HgClone(VCSClone):
+    vcs = "hg"
 
-        self.cache_dir = None
-        if cache_dir:
-            self.cache_dir = os.path.expanduser(cache_dir)
-        self.duration = -1
-        self.dirname = dirname
+class SvnUpdate(VCSClone):
+    vcs = "svn"
 
-    def run(self, context):
-        dirname = self.dirname
-
-        ##
-
-        if self.cache_dir:
-            print 'updating cache dir:', self.cache_dir
-            cwd = os.getcwd()
-            os.chdir(self.cache_dir)
-            cmdlist = ['svn', 'update']
-            (ret, out, err) = _run_command(cmdlist)
-            if ret != 0:
-                self.command_list = cmdlist
-                self.status = ret
-                self.output = out
-                self.errout = err
-                return
-
-            subdir = os.path.join(cwd, dirname)
-            shutil.copytree(self.cache_dir, subdir)
-
-            os.chdir(subdir)
-        else:
-            cmdlist = ['svn', 'co', self.repository, dirname]
-
-            (ret, out, err) = _run_command(cmdlist)
-            if ret != 0:
-                self.command_list = cmdlist
-                self.status = ret
-                self.output = out
-                self.errout = err
-
-                return
-
-            print cmdlist, out
-
-            if not os.path.exists(dirname) and os.path.isdir(dirname):
-                self.command_list = cmdlist
-                self.status = -1
-                self.output = ''
-                self.errout = 'pony-build-client cannot find expected svn dir: %s' % (dirname,)
-
-                print 'wrong guess; %s does not exist.  whoops' % (dirname,)
-                return
-
-            os.chdir(dirname)
-
-        ##
-
-        self.status = 0                 # success
-        self.output = ''
-        self.errout = ''
-
-###
 
 def get_hostname():
     import socket
