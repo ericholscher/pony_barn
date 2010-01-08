@@ -1,7 +1,7 @@
 import os
 import sys
 from base import BaseBuild
-from pony_build import client as pony
+from pony_barn import client as pony
 
 
 # DRL_FIXME: Fetch/setup a simple Solr for testing?

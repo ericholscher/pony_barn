@@ -1,6 +1,6 @@
 import sys
 from base_django import DjangoBuild
-from pony_build import client as pony
+from pony_barn import client as pony
 
 
 class PonyBuild(DjangoBuild):

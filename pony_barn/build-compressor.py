@@ -1,6 +1,6 @@
 import sys
 from base import BaseBuild
-from pony_build import client as pony
+from pony_barn import client as pony
 
 class PonyBuild(BaseBuild):
 
