@@ -192,7 +192,7 @@ class VCSClone(SetupCommand):
 
     def __init__(self, repository, branch='master', cache_dir=None,
                  use_cache=True, egg=None, **kwargs):
-        BaseCommand.__init__(self, [], **kwargs)
+        SetupCommand.__init__(self, [], **kwargs)
         self.repository = repository
         self.branch = branch
         self.egg = egg
@@ -221,7 +221,7 @@ class VCSClone(SetupCommand):
         except:
             self.status = 1
 
-        context.build_dir = os.path.join(cache_dir)
+        context.build_dir = cache_dir
 
     def get_results(self):
         self.results_dict['out'] = self.results_dict['errout'] = ''
