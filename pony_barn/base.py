@@ -44,7 +44,7 @@ class BaseBuild(object):
                            action='store_true', default=False,
                            help="run a build whether or not it's stale")
         self.cmdline.add_option('-r', '--report', dest='report',
-                           action='store_false', default=False,
+                           action='store_true', default=False,
                            help="report build results to server")
         self.cmdline.add_option('-N', '--no-clean-temp', dest='cleanup_temp',
                            action='store_false', default=True,
