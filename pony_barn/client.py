@@ -1,7 +1,7 @@
 """
-Client library + simple command-line script for pony-build.
+Client library for pony-build.
 
-See http://github.com/ctb/pony-build/.
+See http://github.com/ericholscher/pony_barn/.
 """
 
 import datetime
@@ -12,24 +12,18 @@ import tempfile
 import shutil
 import os, os.path
 import time
-import urlparse
 import traceback
 from optparse import OptionParser
-import pprint
 
 import pip
 
 DEFAULT_CACHE_DIR='~/.pony-build'
+
 def guess_cache_dir(dirname):
     parent = os.environ.get('PONY_BUILD_CACHE', DEFAULT_CACHE_DIR)
     parent = os.path.expanduser(parent)
     result = os.path.join(parent, dirname)
     return result
-
-def _replace_variables(cmd, variables_d):
-    if cmd.startswith('PB:'):
-        cmd = variables_d[cmd[3:]]
-    return cmd
 
 def _run_command(command_list, cwd=None, variables=None):
     environment = os.environ.copy()
@@ -38,7 +32,6 @@ def _run_command(command_list, cwd=None, variables=None):
     if variables:
         x = []
         for cmd in command_list:
-            cmd = _replace_variables(cmd, variables)
             x.append(cmd)
         command_list = x
 
@@ -318,19 +311,4 @@ def check(name, server_url, tags=(), hostname=None, arch=None, reserve_time=0):
     s = xmlrpclib.ServerProxy(server_url, allow_none=True)
     (flag, reason) = s.check_should_build(client_info, True, reserve_time)
     return flag
-
-
-def get_python_config(options, args):
-    if not len(args):
-        python_ver = 'python2.5'
-    else:
-        python_ver = args[0]
-        print 'setting python version:', python_ver
-
-    tags = [python_ver]
-
-    if len(args) > 1:
-        tags.extend(args[1:])
-
-    return dict(python_exe=python_ver, tags=tags)
 
