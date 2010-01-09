@@ -41,8 +41,9 @@ class DjangoBuild(BaseBuild):
             self.db_pass = ''
 
         # Create the settings file
+        self.settings_path = "pony_barn_test_settings"
         dest_dir = os.path.join(self.context.tempdir, 'lib', self.py_name, 'site-packages')
-        settings_dest = os.path.join(dest_dir, 'django_pony_test_settings.py')
+        settings_dest = os.path.join(dest_dir, '%s.py' % self.settings_path)
         init_dest = os.path.join(dest_dir, '__init__.py')
         settings_template = open(self.settings_file).read()
         context = Context({

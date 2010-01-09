@@ -95,3 +95,10 @@ class BaseBuild(object):
         if not client_info['success']:
             return -1
         return 0
+
+
+    def get_name(self):
+        if hasattr(self, 'package_name'):
+            return self.package_name
+        else:
+            return self.name
