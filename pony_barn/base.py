@@ -9,6 +9,7 @@ import pony_barn.client as pony
 class BaseBuild(object):
     def __init__(self):
         self.required = []
+        self.tags = []
 
     def setup(self):
         "This is where subclasses define extra setup."
@@ -63,7 +64,7 @@ class BaseBuild(object):
         # Figure out the python version and tags
         py_version = ".".join(str(p) for p in sys.version_info[:2])
         self.py_name = 'python%s' % py_version
-        self.tags = [self.py_name, 'base_builder']
+        self.tags.extend([self.py_name, 'base_builder'])
 
     def check_build(self):
         if not self.options.force_build:

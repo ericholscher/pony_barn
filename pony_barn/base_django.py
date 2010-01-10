@@ -10,6 +10,7 @@ class DjangoBuild(BaseBuild):
     """
 
     def __init__(self):
+        super(DjangoBuild, self).__init__()
         self.directory = os.path.dirname(os.path.abspath(__file__))
         self.settings_file = os.path.join(self.directory, 'settings', 'base_settings.py')
         self.required = ['django']
@@ -44,6 +45,8 @@ class DjangoBuild(BaseBuild):
             self.db_user = ''
             self.db_pass = ''
 
+        self.tags.append(db)
+
         # Create the settings file
         self.settings_path = "pony_barn_test_settings"
         dest_dir = os.path.join(self.context.tempdir, 'lib', self.py_name, 'site-packages')
@@ -74,7 +77,7 @@ class DjangoVCSBuild(DjangoBuild):
             self.get_vcs()(self.repo_url, egg=self.get_name()),
             pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
             pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
-            pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
+            pony.TestCommand([self.context.djangoadmin, 'test', self.get_name(), '--settings', self.settings_path], name='run tests')
                      ]
 
 
