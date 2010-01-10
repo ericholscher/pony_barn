@@ -62,28 +62,45 @@ class DjangoBuild(BaseBuild):
         open(init_dest, 'w').write('#OMG')
         sys.path.insert(0, dest_dir)
 
-class DjangoGitBuild(DjangoBuild):
+
+class DjangoVCSBuild(DjangoBuild):
+    """
+    A build that checkouts out from a repo and then runs manage.py test
+    on your application
+    """
+
+    def define_commands(self):
+        self.commands = [
+            self.get_vcs()(self.repo_url, egg=self.get_name()),
+            pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
+            pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
+            pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
+                     ]
+
+
+class DjangoGitBuild(DjangoVCSBuild):
     """
     A build that checkouts out from a git repo and then runs manage.py test
     on your application
     """
 
-    def define_commands(self):
-        self.commands = [ pony.GitClone(self.repo_url, egg=self.get_name()),
-                     pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
-                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
-                     pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
-                     ]
+    def get_vcs(self):
+        return pony.GitClone
 
-class DjangoHgBuild(DjangoBuild):
+
+class DjangoHgBuild(DjangoVCSBuild):
     """
     A build that checkouts out from a hg repo and then runs manage.py test
     on your application
     """
+    def get_vcs(self):
+        return pony.HgClone
 
-    def define_commands(self):
-        self.commands = [ pony.HgClone(self.repo_url, egg=self.get_name()),
-                     pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
-                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
-                     pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
-                     ]
+
+class DjangoSvnBuild(DjangoVCSBuild):
+    """
+    A build that checkouts out from a svn repo and then runs manage.py test
+    on your application
+    """
+    def get_vcs(self):
+        return pony.SvnUpdate
