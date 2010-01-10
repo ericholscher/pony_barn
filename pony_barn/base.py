@@ -102,3 +102,39 @@ class BaseBuild(object):
             return self.package_name
         else:
             return self.name
+
+
+class VCSBuild(BaseBuild):
+    """
+    A build that checks out from a git repo and runs setup.py test on your repo
+    """
+
+    def define_commands(self):
+        self.commands = [
+            self.get_vcs()(self.repo_url, egg=self.get_name()),
+            pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
+            pony.TestCommand([self.context.python, 'setup.py', 'test'], name='Run tests', run_cwd=None),
+            ]
+
+class GitBuild(VCSBuild):
+    """
+    A build that checks out from a git repo and runs setup.py test on your repo
+    """
+
+    def get_vcs(self):
+        return pony.GitClone
+
+class HgBuild(VCSBuild):
+    """
+    A build that checks out from a hg repo and runs setup.py test on your repo
+    """
+    def get_vcs(self):
+        return pony.HgClone
+
+
+class SvnBuild(VCSBuild):
+    """
+    A build that checks out from a svn repo and runs setup.py test on your repo
+    """
+    def get_vcs(self):
+        return pony.SvnUpdate

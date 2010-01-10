@@ -1,6 +1,6 @@
 import sys
 from pony_barn import client as pony
-from base_hg import HgBuild
+from base import HgBuild
 
 class PonyBuild(HgBuild):
 

@@ -1,6 +1,6 @@
 import sys
 from pony_barn import client as pony
-from base_git import GitBuild
+from base import GitBuild
 
 class PonyBuild(GitBuild):
 
