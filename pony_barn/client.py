@@ -207,7 +207,7 @@ class VCSClone(SetupCommand):
         vcs_repo = vcs("%s+%s#egg=%s" % (self.vcs, self.repository, self.egg))
         try:
             if os.path.exists(cache_dir):
-                vcs_repo.update(cache_dir, [])
+                vcs_repo.update(cache_dir, ['origin/master'])
             else:
                 vcs_repo.obtain(cache_dir)
             self.status = 0
