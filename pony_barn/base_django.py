@@ -1,9 +1,13 @@
 import os
 import sys
 from base import BaseBuild
+from pony_barn import client as pony
 from django.template import Template, Context
 
 class DjangoBuild(BaseBuild):
+    """
+    A build that sets up a django settings file for you
+    """
 
     def __init__(self):
         self.directory = os.path.dirname(os.path.abspath(__file__))
@@ -57,3 +61,29 @@ class DjangoBuild(BaseBuild):
         open(settings_dest, 'w').write(rendered)
         open(init_dest, 'w').write('#OMG')
         sys.path.insert(0, dest_dir)
+
+class DjangoGitBuild(DjangoBuild):
+    """
+    A build that checkouts out from a git repo and then runs manage.py test
+    on your application
+    """
+
+    def define_commands(self):
+        self.commands = [ pony.GitClone(self.repo_url, egg=self.get_name()),
+                     pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
+                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
+                     pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
+                     ]
+
+class DjangoHgBuild(DjangoBuild):
+    """
+    A build that checkouts out from a hg repo and then runs manage.py test
+    on your application
+    """
+
+    def define_commands(self):
+        self.commands = [ pony.HgClone(self.repo_url, egg=self.get_name()),
+                     pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
+                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
+                     pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', self.settings_path], name='run tests')
+                     ]
