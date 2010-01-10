@@ -1,9 +1,9 @@
 import sys
-from base_django import DjangoBuild
+from base_django import DjangoGitBuild
 from pony_barn import client as pony
 
 
-class PonyBuild(DjangoBuild):
+class PonyBuild(DjangoGitBuild):
 
     def __init__(self):
         super(PonyBuild, self).__init__()
@@ -11,15 +11,6 @@ class PonyBuild(DjangoBuild):
         self.name = "django-filter"
         self.package_name = 'django_filters'
         self.installed_apps = ['django_filters', 'django_filters.tests']
-
-    def define_commands(self):
-
-        self.commands = [ pony.GitClone(self.repo_url),
-                     pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
-                     pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', 'django_pony_test_settings'], name='syncdb'),
-                     pony.TestCommand([self.context.djangoadmin, 'test', self.package_name, '--settings', 'django_pony_test_settings'], name='run tests')
-                     ]
-
 
 if __name__ == '__main__':
     build = PonyBuild()

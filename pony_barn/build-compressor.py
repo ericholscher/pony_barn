@@ -12,7 +12,7 @@ class PonyBuild(BaseBuild):
 
     def define_commands(self):
 
-        self.commands = [ pony.GitClone(self.repo_url),
+        self.commands = [ pony.GitClone(self.repo_url, egg=self.get_name()),
                         pony.TestCommand([self.context.python, 'tests/manage.py', 'test', '--settings', 'tests.settings'], name='run tests')
                      ]
 
