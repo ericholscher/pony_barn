@@ -9,6 +9,7 @@ class PonyBuild(DjangoHgBuild):
         self.repo_url = "http://bitbucket.org/andrewgodwin/south"
         self.name = "south"
         self.installed_apps = ['south']
+        self.default_db = 'postgres'
 
 if __name__ == '__main__':
     build = PonyBuild()

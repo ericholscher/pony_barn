@@ -20,15 +20,23 @@ class DjangoBuild(BaseBuild):
         super(DjangoBuild, self).add_options()
 
         self.cmdline.add_option('-d', '--db',
-                           choices=['sqlite', 'postgres', 'mysql'], default='sqlite',
+                           choices=['sqlite', 'postgres', 'mysql'], default=None,
                            help='Which database backend to use.')
         self.cmdline.add_option('--name', default='pony_build_test',
                            help='Database name to use')
 
     def setup(self):
         #Setup Database
-        db = self.options.db
         name = self.options.name
+
+        db = self.options.db
+        if db is None:
+            if hasattr(self, 'default_db'):
+                print "Using Default DB"
+                db = self.default_db
+            else:
+                db = 'sqlite'
+
         if db == 'sqlite':
             self.db_engine = 'sqlite3'
             self.db_name = name
