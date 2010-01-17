@@ -103,7 +103,7 @@ class VirtualenvContext(Context):
 
         # install pip, then use it to install any packages desired
         print 'installing pip'
-        _run_command([self.easy_install, '-U', 'pip'])
+        _run_command([self.easy_install, '-U', 'pip==tip'])
         for dep in self.dependencies:
             print "installing", dep
             _run_command([self.pip, 'install', '-U', '-I'] + dep.split())
@@ -207,12 +207,21 @@ class VCSClone(SetupCommand):
         vcs_repo = vcs("%s+%s#egg=%s" % (self.vcs, self.repository, self.egg))
         try:
             if os.path.exists(cache_dir):
-                vcs_repo.update(cache_dir, ['origin/master'])
+                if vcs is 'git':
+                    vcs_repo.update(cache_dir, ['origin/master'])
+                else:
+                    #pip doesn't use teh second arg.
+                    vcs_repo.update(cache_dir, [])
+
             else:
                 vcs_repo.obtain(cache_dir)
             self.status = 0
-        except:
+        except Exception, e:
+            print "Exception on checkout: %s" % e
             self.status = 1
+
+        #url, hash = vcs_repo.get_info(cache_dir)
+        #self.version_info = hash
 
         context.build_dir = cache_dir
 
