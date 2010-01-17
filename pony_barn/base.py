@@ -67,10 +67,14 @@ class BaseBuild(object):
         self.tags.extend([self.py_name, 'base_builder'])
 
     def check_build(self):
-        if not self.options.force_build:
-            if not pony.check(self.name, self.server_url, tags=self.tags):
-                print 'check build says no need to build; bye'
-                sys.exit(0)
+        try:
+            if not self.options.force_build:
+                if not pony.check(self.name, self.server_url, tags=self.tags):
+                    print 'check build says no need to build; bye'
+                    sys.exit(0)
+        except Exception, e:
+            #Don't fail on network error etc.
+            print "Check should build Exception: %s" % e
 
     def report(self, results):
         client_info, reslist = results

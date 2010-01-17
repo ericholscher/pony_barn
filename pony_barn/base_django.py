@@ -3,6 +3,8 @@ import sys
 from base import BaseBuild
 from pony_barn import client as pony
 from django.template import Template, Context
+from django.conf import settings
+
 
 class DjangoBuild(BaseBuild):
     """
@@ -68,6 +70,9 @@ class DjangoBuild(BaseBuild):
             'db_user': self.db_user,
             'db_pass': self.db_pass,
         })
+        #Templates needs settings... :/
+        if not settings.configured:
+            settings.configure()
         rendered = Template(settings_template).render(context)
         open(settings_dest, 'w').write(rendered)
         open(init_dest, 'w').write('#OMG')
