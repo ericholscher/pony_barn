@@ -205,14 +205,21 @@ class VCSClone(SetupCommand):
                 cache_dir = guess_cache_dir(self.egg)
         vcs = pip.vcs.get_backend(self.vcs)
         vcs_repo = vcs("%s+%s#egg=%s" % (self.vcs, self.repository, self.egg))
+        url, hash = vcs_repo.get_info(cache_dir)
+        self.version_info = hash
         try:
             if os.path.exists(cache_dir):
-                if vcs is 'git':
-                    vcs_repo.update(cache_dir, ['origin/master'])
-                else:
-                    #pip doesn't use teh second arg.
-                    vcs_repo.update(cache_dir, [])
-
+                try:
+                    if vcs is 'git':
+                        _run_command(['git', 'clean', '-f', self.cache_dir])
+                        vcs_repo.update(cache_dir, ['origin/master'])
+                    else:
+                        #pip doesn't use teh second arg.
+                        vcs_repo.update(cache_dir, [])
+                except Exception, e:
+                    #If an update failed, still run.
+                    #This allows for running tests offline
+                    print "Updating Repo Failed: %s" % e
             else:
                 vcs_repo.obtain(cache_dir)
             self.status = 0
@@ -220,8 +227,6 @@ class VCSClone(SetupCommand):
             print "Exception on checkout: %s" % e
             self.status = 1
 
-        #url, hash = vcs_repo.get_info(cache_dir)
-        #self.version_info = hash
 
         context.build_dir = cache_dir
 
