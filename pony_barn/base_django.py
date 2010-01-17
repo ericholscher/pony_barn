@@ -1,6 +1,6 @@
 import os
 import sys
-from base import BaseBuild
+from base import BaseBuild, GitBuild, HgBuild, SvnBuild
 from pony_barn import client as pony
 from django.template import Template, Context
 from django.conf import settings
@@ -91,32 +91,26 @@ class DjangoVCSBuild(DjangoBuild):
             pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
             pony.BuildCommand([self.context.djangoadmin, 'syncdb', '--noinput', '--settings', self.settings_path], name='Syncdb'),
             pony.TestCommand([self.context.djangoadmin, 'test', self.get_name(), '--settings', self.settings_path], name='run tests')
-                     ]
+            ]
 
 
-class DjangoGitBuild(DjangoVCSBuild):
+class DjangoGitBuild(GitBuild, DjangoVCSBuild):
     """
     A build that checkouts out from a git repo and then runs manage.py test
     on your application
     """
+    pass
 
-    def get_vcs(self):
-        return pony.GitClone
-
-
-class DjangoHgBuild(DjangoVCSBuild):
+class DjangoHgBuild(HgBuild, DjangoVCSBuild):
     """
     A build that checkouts out from a hg repo and then runs manage.py test
     on your application
     """
-    def get_vcs(self):
-        return pony.HgClone
+    pass
 
-
-class DjangoSvnBuild(DjangoVCSBuild):
+class DjangoSvnBuild(SvnBuild, DjangoVCSBuild):
     """
     A build that checkouts out from a svn repo and then runs manage.py test
     on your application
     """
-    def get_vcs(self):
-        return pony.SvnUpdate
+    pass
