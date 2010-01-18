@@ -8,15 +8,14 @@ import pony_barn.client as pony
 
 class BaseBuild(object):
 
-    vcs_list = {
-        'git': pony.GitClone,
-        'hg': pony.HgClone,
-        'svn': pony.SvnUpdate,
-    }
-
     def __init__(self):
         self.required = []
         self.tags = []
+        self.vcs_list = {
+        'git': pony.GitClone,
+        'hg': pony.HgClone,
+        'svn': pony.SvnUpdate,
+        }
 
     def setup(self):
         "This is where subclasses define extra setup."
@@ -28,7 +27,7 @@ class BaseBuild(object):
 
     @property
     def vcs_class(self):
-        return self.vcs_class[self.vcs]
+        return self.vcs_list[self.vcs]
 
     def execute(self, argv):
         self.add_options()
@@ -43,7 +42,8 @@ class BaseBuild(object):
         self.check_build()
         self.context = pony.VirtualenvContext(always_cleanup=self.options.cleanup_temp,
                                               use_site_packages=self.options.site_packages,
-                                              dependencies=self.required)
+                                              dependencies=self.required,
+                                              base_build=self)
         self.setup()
         self.define_commands()
         results = pony.do(self.name, self.commands, context=self.context)
@@ -144,6 +144,7 @@ class VCSBuild(BaseBuild):
             pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
             pony.TestCommand([self.context.python, 'setup.py', 'test'], name='Run tests', run_cwd=None),
             ]
+
 
 class GitBuild(VCSBuild):
     """

@@ -26,6 +26,7 @@ def guess_cache_dir(dirname):
     return result
 
 def _run_command(command_list, cwd=None, variables=None):
+    print command_list
     environment = os.environ.copy()
     environment['PIP_DOWNLOAD_CACHE'] = '/tmp/pip/download'
     environment['PYTHONPATH'] = "%s:%s" % (os.getcwd(), environment['PYTHONPATH'])
@@ -76,6 +77,7 @@ class VirtualenvContext(Context):
         Context.__init__(self)
         self.cleanup = always_cleanup
         self.dependencies = dependencies
+        base_build = kwargs['base_build']
 
         # Create the virtualenv. Have to do this here so that commands can use
         # VirtualenvContext.python (etc) to get at the right python.
@@ -85,9 +87,9 @@ class VirtualenvContext(Context):
 
         print 'creating virtualenv'
         if use_site_packages:
-            _run_command(['virtualenv', self.tempdir])
+            _run_command([base_build.py_name, '-m', 'virtualenv', self.tempdir])
         else:
-            _run_command(['virtualenv', '--no-site-packages', self.tempdir])
+            _run_command([base_build.py_name, '-m', 'virtualenv', '--no-site-packages', self.tempdir])
 
         # calculate where a few things live so we can easily shell out to 'em
         self.python = os.path.join(self.tempdir, 'bin', 'python')
@@ -322,4 +324,3 @@ def check(name, server_url, tags=(), hostname=None, arch=None, reserve_time=0):
     s = xmlrpclib.ServerProxy(server_url, allow_none=True)
     (flag, reason) = s.check_should_build(client_info, True, reserve_time)
     return flag
-
