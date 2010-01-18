@@ -212,7 +212,7 @@ class VCSClone(SetupCommand):
                         _run_command(['git', 'clean', '-f', self.cache_dir])
                         vcs_repo.update(cache_dir, ['origin/master'])
                     else:
-                        #pip doesn't use teh second arg.
+                        #pip doesn't use the second arg.
                         vcs_repo.update(cache_dir, [])
                 except Exception, e:
                     #If an update failed, still run.
@@ -225,8 +225,6 @@ class VCSClone(SetupCommand):
             print "Exception on checkout: %s" % e
             self.status = 1
 
-        url, hash = vcs_repo.get_info(cache_dir)
-        self.version_info = hash
         context.build_dir = cache_dir
 
     def get_results(self):
