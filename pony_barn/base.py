@@ -7,6 +7,13 @@ import optparse
 import pony_barn.client as pony
 
 class BaseBuild(object):
+
+    vcs_list = {
+        'git': pony.GitClone,
+        'hg': pony.HgClone,
+        'svn': pony.SvnUpdate,
+    }
+
     def __init__(self):
         self.required = []
         self.tags = []
@@ -18,6 +25,10 @@ class BaseBuild(object):
     def define_commands(self):
         "This is where subclasses define how they are run."
         pass
+
+    @property
+    def vcs_class(self):
+        return self.vcs_class[self.vcs]
 
     def execute(self, argv):
         self.add_options()
@@ -109,6 +120,19 @@ class BaseBuild(object):
             return self.name
 
 
+class NoseBuild(BaseBuild):
+    """
+    A build that runs nosetests at the top of the source tree.
+    """
+
+    def define_commands(self):
+        self.commands = [
+            self.vcs_class(self.repo_url, egg=self.get_name()),
+            pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install from source'),
+            pony.TestCommand([os.path.join(self.context.tempdir, 'bin', 'nosetests')], name="Run Nose Tests")
+            ]
+
+
 class VCSBuild(BaseBuild):
     """
     A build that checks out from a git repo and runs setup.py test on your repo
@@ -116,7 +140,7 @@ class VCSBuild(BaseBuild):
 
     def define_commands(self):
         self.commands = [
-            self.get_vcs()(self.repo_url, egg=self.get_name()),
+            self.vcs_class(self.repo_url, egg=self.get_name()),
             pony.BuildCommand([self.context.python, 'setup.py', 'install'], name='Install'),
             pony.TestCommand([self.context.python, 'setup.py', 'test'], name='Run tests', run_cwd=None),
             ]
@@ -125,21 +149,16 @@ class GitBuild(VCSBuild):
     """
     A build that checks out from a git repo and runs setup.py test on your repo
     """
-
-    def get_vcs(self):
-        return pony.GitClone
+    vcs = 'git'
 
 class HgBuild(VCSBuild):
     """
     A build that checks out from a hg repo and runs setup.py test on your repo
     """
-    def get_vcs(self):
-        return pony.HgClone
-
+    vcs = 'hg'
 
 class SvnBuild(VCSBuild):
     """
     A build that checks out from a svn repo and runs setup.py test on your repo
     """
-    def get_vcs(self):
-        return pony.SvnUpdate
+    vcs = 'svn'
