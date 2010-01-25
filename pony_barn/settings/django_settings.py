@@ -1,3 +1,6 @@
+import os
+pid = os.getpid()
+
 DATABASES = {
     'default': {
         'ENGINE': '{{ db_engine }}',
@@ -7,6 +10,6 @@ DATABASES = {
     },
     'other': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'TEST_NAME': 'other_db'
+        'TEST_NAME': 'other_db_%s' % pid,
     }
 }
