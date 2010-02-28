@@ -16,7 +16,8 @@ class PonyBuild(DjangoBuild):
     def define_commands(self):
             self.commands = [
                 pony.GitClone(self.repo_url, egg=self.get_name()),
-                pony.TestCommand([self.context.python, 'tests/runtests.py', '--settings', self.settings_path], name='run tests')
+                pony.TestCommand([self.context.python, 'tests/runtests.py',
+                                  '--settings', self.settings_path, '--noinput'], name='run tests')
              ]
 
     def get_tags(self):
