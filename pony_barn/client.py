@@ -232,7 +232,7 @@ class VCSClone(SetupCommand):
         try:
             if os.path.exists(cache_dir):
                 try:
-                    if vcs is 'git':
+                    if vcs.name is 'git':
                         _run_command(['git', 'clean', '-f', self.cache_dir])
                         vcs_repo.update(cache_dir, ['origin/master'])
                     else:
