@@ -72,6 +72,28 @@ class Context(object):
     def update_client_info(self, info):
         info['duration'] = self.end_time - self.start_time
 
+class CurrentDirectoryContext(Context):
+    def __init__(self, cleanup=True):
+        Context.__init__(self)
+        self.cleanup = cleanup
+
+    def initialize(self):
+        Context.initialize(self)
+        print "Using the current directory (%s) as my working dir" % os.getcwd()
+
+class TempDirectoryContext(Context):
+    def __init__(self, cleanup=True):
+        Context.__init__(self)
+        self.cleanup = cleanup
+
+    def initialize(self):
+        Context.initialize(self)
+        self.tempdir = tempfile.mkdtemp()
+        self.cwd = os.getcwd()
+
+        print 'changing to temp directory:', self.tempdir
+        os.chdir(self.tempdir)
+
 class VirtualenvContext(Context):
     def __init__(self, always_cleanup=True, use_site_packages=False, dependencies=[], **kwargs):
         Context.__init__(self)

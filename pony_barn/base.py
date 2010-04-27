@@ -38,9 +38,17 @@ class BaseBuild(object):
         else:
             self.server_url = self.options.server_url
 
+
+        if not self.options.local:
+            self.context_class = pony.CurrentDirectoryContext
+            self.skip_vcs = True
+        else:
+            self.context_class = pony.VirtualenvContext
+            self.skip_vcs = False
+
         self.get_tags()
         self.check_build()
-        self.context = pony.VirtualenvContext(always_cleanup=self.options.cleanup_temp,
+        self.context = self.context_class(always_cleanup=self.options.cleanup_temp,
                                               use_site_packages=self.options.site_packages,
                                               dependencies=self.required,
                                               base_build=self)
@@ -58,6 +66,9 @@ class BaseBuild(object):
         self.cmdline.add_option('-r', '--report', dest='report',
                            action='store_true', default=False,
                            help="report build results to server")
+        self.cmdline.add_option('-l', '--local', dest='local',
+                           action='store_true', default=True,
+                           help="Run the tests in your current directory")
         self.cmdline.add_option('-N', '--no-clean-temp', dest='cleanup_temp',
                            action='store_false', default=True,
                            help='do not clean up the temp directory')
