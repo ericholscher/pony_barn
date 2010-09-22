@@ -9,7 +9,7 @@ class PonyBuild(DjangoGitBuild):
         self.repo_url = "git://github.com/ericholscher/django-kong"
         self.name = "django-kong"
         self.package_name = 'kong'
-        self.required = ['django', 'twill']
+        self.required = ['django', 'twill', 'mimeparse']
         self.installed_apps = ['kong']
 
 if __name__ == '__main__':
